@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProBet — Combinés Multi-Sports Live</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#080B12; --surface:#0F1421; --card:#141928; --border:#1F2840;
+  --gold:#F5C842; --gold2:#FFE080; --green:#00D68F; --red:#FF5252;
+  --blue:#4F8EFF; --purple:#9B6DFF; --orange:#FF8C42; --cyan:#00C4CC;
+  --text:#E4E8F5; --muted:#5A6580; --muted2:#8896B0;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-thumb{background:#1F2840;border-radius:3px;}
+
+header{position:sticky;top:0;z-index:100;background:rgba(8,11,18,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:60px;}
+.logo{font-family:'Oswald',sans-serif;font-size:1.55rem;font-weight:700;letter-spacing:3px;}
+.logo span{color:var(--gold);}
+.header-r{display:flex;align-items:center;gap:12px;}
+.live-pill{display:flex;align-items:center;gap:5px;background:rgba(0,214,143,0.1);border:1px solid rgba(0,214,143,0.25);padding:4px 11px;border-radius:20px;font-size:0.7rem;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.3s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+#last-update{font-size:0.72rem;color:var(--muted2);}
+#refresh-btn{background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.3);color:var(--gold);padding:5px 14px;border-radius:8px;cursor:pointer;font-size:0.78rem;font-weight:600;font-family:'Inter',sans-serif;transition:all 0.2s;}
+#refresh-btn:hover{background:var(--gold);color:#000;}
+
+.hero{text-align:center;padding:44px 20px 32px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:700px;height:350px;background:radial-gradient(ellipse,rgba(245,200,66,0.08) 0%,transparent 65%);pointer-events:none;}
+.hero h1{font-family:'Oswald',sans-serif;font-size:clamp(2rem,5vw,3.8rem);font-weight:700;letter-spacing:4px;line-height:1.05;}
+.hero h1 em{color:var(--gold);font-style:normal;}
+.hero-sub{color:var(--muted2);font-size:0.9rem;margin:10px auto 0;max-width:500px;}
+.warn{display:inline-flex;align-items:center;gap:7px;margin-top:18px;background:rgba(255,82,82,0.08);border:1px solid rgba(255,82,82,0.2);padding:6px 16px;border-radius:8px;font-size:0.74rem;color:#FF9090;}
+
+.sport-nav{display:flex;gap:6px;overflow-x:auto;padding:14px 20px;border-bottom:1px solid var(--border);scrollbar-width:none;}
+.sport-nav::-webkit-scrollbar{display:none;}
+.sport-btn{display:flex;align-items:center;gap:7px;padding:7px 16px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--muted2);cursor:pointer;font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;white-space:nowrap;transition:all 0.18s;}
+.sport-btn:hover{border-color:#2A3555;color:var(--text);}
+.sport-btn.active{background:var(--gold);color:#000;border-color:var(--gold);}
+
+.main{max-width:1020px;margin:0 auto;padding:24px 16px 80px;}
+
+/* LOADING */
+.loading{text-align:center;padding:60px 20px;}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{color:var(--muted2);font-size:0.9rem;}
+
+/* ERROR */
+.error-box{background:rgba(255,82,82,0.08);border:1px solid rgba(255,82,82,0.2);border-radius:12px;padding:20px;text-align:center;color:#FF9090;margin:20px 0;}
+
+/* STAT STRIP */
+.stat-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;}
+.stat-cell{padding:14px 10px;text-align:center;border-right:1px solid var(--border);}
+.stat-cell:last-child{border-right:none;}
+.stat-n{font-family:'Oswald',sans-serif;font-size:1.6rem;color:var(--gold);}
+.stat-l{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+/* COMBOS */
+.sec-title{font-family:'Oswald',sans-serif;font-size:1.15rem;letter-spacing:2px;display:flex;align-items:center;gap:10px;margin-bottom:14px;margin-top:28px;}
+.sec-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);}
+.combo{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;transition:transform 0.2s,border-color 0.2s;animation:fadeUp 0.4s ease both;}
+.combo:hover{transform:translateY(-2px);border-color:#2A3555;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+.combo-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:14px 18px 12px;background:linear-gradient(135deg,rgba(245,200,66,0.06) 0%,transparent 60%);border-bottom:1px solid var(--border);}
+.combo-left{display:flex;align-items:center;gap:10px;}
+.combo-num{font-family:'Oswald',sans-serif;font-size:2rem;color:var(--gold);line-height:1;min-width:36px;}
+.combo-info h3{font-weight:700;font-size:0.9rem;}
+.combo-info p{font-size:0.72rem;color:var(--muted2);margin-top:2px;}
+.big-cote{font-family:'Oswald',sans-serif;font-size:2.1rem;color:var(--gold);line-height:1;text-align:right;}
+.cote-lbl{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;text-align:right;}
+
+.pick{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid rgba(31,40,64,0.5);transition:background 0.15s;}
+.pick:last-child{border-bottom:none;}
+.pick:hover{background:rgba(255,255,255,0.015);}
+.pick-icon{font-size:1.1rem;width:24px;text-align:center;flex-shrink:0;}
+.badge{font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.8px;flex-shrink:0;min-width:42px;text-align:center;}
+.b-foot{background:rgba(0,214,143,0.1);color:var(--green);}
+.b-nba{background:rgba(255,140,66,0.1);color:var(--orange);}
+.b-nhl{background:rgba(0,196,204,0.1);color:var(--cyan);}
+.b-ten{background:rgba(155,109,255,0.1);color:var(--purple);}
+.b-ucl{background:rgba(79,142,255,0.1);color:var(--blue);}
+
+.pick-match{flex:1;min-width:0;}
+.pick-teams{font-weight:600;font-size:0.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pick-when{font-size:0.7rem;color:var(--muted);margin-top:2px;}
+.bar-bg{height:3px;background:var(--border);border-radius:2px;margin-top:5px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:2px;transition:width 1.1s cubic-bezier(.4,0,.2,1);}
+.bar-txt{font-size:0.63rem;color:var(--muted);margin-top:3px;}
+
+.pick-r{text-align:right;flex-shrink:0;}
+.chip{font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:5px;background:rgba(79,142,255,0.1);color:var(--blue);white-space:nowrap;}
+.pick-cote{font-family:'Oswald',sans-serif;font-size:1.2rem;color:var(--gold2);margin-top:3px;}
+
+.combo-foot{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:rgba(245,200,66,0.03);border-top:1px solid var(--border);flex-wrap:wrap;gap:6px;}
+.risk{padding:3px 10px;border-radius:6px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.r-low{background:rgba(0,214,143,0.1);color:var(--green);border:1px solid rgba(0,214,143,0.2);}
+.r-med{background:rgba(245,200,66,0.1);color:var(--gold);border:1px solid rgba(245,200,66,0.2);}
+.r-high{background:rgba(255,82,82,0.1);color:var(--red);border:1px solid rgba(255,82,82,0.2);}
+.profit{font-size:0.78rem;color:var(--muted2);}
+.profit strong{color:var(--green);}
+
+/* SIMULATOR */
+.sim{position:relative;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-top:28px;overflow:hidden;}
+.sim::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold2),transparent);}
+.sim-title{font-family:'Oswald',sans-serif;font-size:1.05rem;letter-spacing:2px;color:var(--gold);margin-bottom:14px;}
+.sim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+.sim-field label{display:block;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:5px;}
+.sim-field select,.sim-field input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-family:'Inter',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s;}
+.sim-field select:focus,.sim-field input:focus{border-color:var(--gold);}
+.sim-out{margin-top:12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.sim-gain{font-family:'Oswald',sans-serif;font-size:1.7rem;color:var(--green);}
+.sim-profit{font-size:0.78rem;color:var(--muted2);}
+.sim-meta{font-size:0.75rem;color:var(--muted);text-align:right;}
+.sim-meta span{color:var(--gold);font-weight:700;}
+
+.panel{display:none;animation:fadeIn 0.3s ease;}
+.panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+footer{border-top:1px solid var(--border);padding:20px;text-align:center;font-size:0.71rem;color:var(--muted);line-height:1.8;}
+@media(max-width:580px){.pick{flex-wrap:wrap;} .combo-head{flex-direction:column;align-items:flex-start;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PRO<span>BET</span></div>
+  <div class="header-r">
+    <div class="live-pill"><div class="dot"></div> Live</div>
+    <span id="last-update">Chargement...</span>
+    <button id="refresh-btn" onclick="loadData()">🔄 Actualiser</button>
+  </div>
+</header>
+
+<div class="hero">
+  <h1>COMBINÉS<br><em>MULTI-SPORTS LIVE</em></h1>
+  <p class="hero-sub">Football · Basketball · Hockey · Tennis · Champions League<br>Données mises à jour en temps réel</p>
+  <div class="warn">⚠️ Pariez avec modération — 18+ — Les paris comportent des risques</div>
+</div>
+
+<div class="sport-nav">
+  <button class="sport-btn active" onclick="showPanel('all',this)">🔥 Tous</button>
+  <button class="sport-btn" onclick="showPanel('football',this)">⚽ Football</button>
+  <button class="sport-btn" onclick="showPanel('basket',this)">🏀 NBA</button>
+  <button class="sport-btn" onclick="showPanel('ucl',this)">🏆 UCL</button>
+  <button class="sport-btn" onclick="showPanel('hockey',this)">🏒 NHL</button>
+  <button class="sport-btn" onclick="showPanel('tennis',this)">🎾 Tennis</button>
+  <button class="sport-btn" onclick="showPanel('sim',this)">🧮 Simulateur</button>
+</div>
+
+<div class="main">
+  <div class="stat-strip">
+    <div class="stat-cell"><div class="stat-n" id="s-combos">—</div><div class="stat-l">Combinés</div></div>
+    <div class="stat-cell"><div class="stat-n">5</div><div class="stat-l">Sports</div></div>
+    <div class="stat-cell"><div class="stat-n" id="s-matchs">—</div><div class="stat-l">Matchs</div></div>
+    <div class="stat-cell"><div class="stat-n" id="s-cote">—</div><div class="stat-l">Top Cote</div></div>
+    <div class="stat-cell"><div class="stat-n">+50%</div><div class="stat-l">Proba min.</div></div>
+  </div>
+
+  <div id="panel-all" class="panel active"><div class="loading"><div class="spinner"></div><p>Chargement des combinés...</p></div></div>
+  <div id="panel-football" class="panel"><div class="loading"><div class="spinner"></div><p>Chargement...</p></div></div>
+  <div id="panel-basket" class="panel"><div class="loading"><div class="spinner"></div><p>Chargement...</p></div></div>
+  <div id="panel-ucl" class="panel"><div class="loading"><div class="spinner"></div><p>Chargement...</p></div></div>
+  <div id="panel-hockey" class="panel"><div class="loading"><div class="spinner"></div><p>Chargement...</p></div></div>
+  <div id="panel-tennis" class="panel"><div class="loading"><div class="spinner"></div><p>Chargement...</p></div></div>
+  <div id="panel-sim" class="panel"></div>
+
+  <div class="sim" id="sim-box" style="display:none">
+    <div class="sim-title">💰 SIMULATEUR DE GAINS</div>
+    <div class="sim-grid">
+      <div class="sim-field">
+        <label>Combiné</label>
+        <select id="sel" onchange="calc()">
+          <option value="5.5">Combo Football Multi ~5.50</option>
+          <option value="2.8">Combo NBA ~2.80</option>
+          <option value="3.2">Combo UCL ~3.20</option>
+          <option value="7.2">Combo Mix 4 Sports ~7.20</option>
+          <option value="4.9">Combo NHL ~4.90</option>
+          <option value="3.4">Combo Tennis ~3.40</option>
+        </select>
+      </div>
+      <div class="sim-field">
+        <label>Ma mise (€)</label>
+        <input type="number" id="mise" value="20" min="1" max="9999" oninput="calc()">
+      </div>
+    </div>
+    <div class="sim-out">
+      <div><div class="sim-gain" id="g-val">110.00€</div><div class="sim-profit" id="g-profit">Profit net : +90.00€</div></div>
+      <div class="sim-meta">Cote : <span id="g-cote">5.50</span><br>Retour : <span id="g-rtr">18%</span></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>⚠️ <strong>AVERTISSEMENT :</strong> Les paris sportifs comportent des risques importants de perte financière. Site à but informatif uniquement.</p>
+  <p>Les probabilités sont issues des données SportRadar. Cotes estimatives. <strong>18+ uniquement.</strong></p>
+  <p style="margin-top:6px;color:#1F2840;">ProBet © 2026 — Données live via API</p>
+</footer>
+
+<script>
+// ============================================
+// CONFIG
+// ============================================
+const API_BASE = '/api'; // En local : pointe vers /api/data.js (Vercel)
+
+// ============================================
+// DATA & STATE
+// ============================================
+let allData = null;
+let currentPanel = 'all';
+
+// ============================================
+// LOAD DATA FROM API
+// ============================================
+async function loadData() {
+  document.getElementById('refresh-btn').textContent = '⏳ ...';
+  try {
+    const res = await fetch(`${API_BASE}/data`);
+    if (!res.ok) throw new Error('API error');
+    allData = await res.json();
+    renderAll();
+    document.getElementById('last-update').textContent = 'MàJ : ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+  } catch(e) {
+    showError();
+  }
+  document.getElementById('refresh-btn').textContent = '🔄 Actualiser';
+}
+
+function showError() {
+  const panels = ['all','football','basket','ucl','hockey','tennis'];
+  panels.forEach(id => {
+    document.getElementById('panel-'+id).innerHTML = `<div class="error-box">❌ Impossible de charger les données.<br>Vérifie ta connexion et réessaie.</div>`;
+  });
+}
+
+// ============================================
+// RENDER
+// ============================================
+function renderAll() {
+  if (!allData) return;
+
+  // Update stats
+  document.getElementById('s-combos').textContent = allData.combos.length;
+  document.getElementById('s-matchs').textContent = allData.totalMatchs;
+  const bestCote = Math.max(...allData.combos.map(c => c.cote)).toFixed(2);
+  document.getElementById('s-cote').textContent = bestCote;
+
+  // Render each sport panel
+  renderPanel('all', allData.combos);
+  renderPanel('football', allData.combos.filter(c => c.sport === 'football'));
+  renderPanel('basket', allData.combos.filter(c => c.sport === 'basket'));
+  renderPanel('ucl', allData.combos.filter(c => c.sport === 'ucl'));
+  renderPanel('hockey', allData.combos.filter(c => c.sport === 'hockey'));
+  renderPanel('tennis', allData.combos.filter(c => c.sport === 'tennis'));
+
+  // Simulator
+  document.getElementById('sim-box').style.display = 'block';
+  buildSimOptions();
+  calc();
+
+  // Animate bars
+  setTimeout(animateBars, 100);
+}
+
+function renderPanel(panelId, combos) {
+  const el = document.getElementById('panel-' + panelId);
+  if (combos.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted2);">Aucun combiné disponible pour ce sport aujourd'hui.</div>`;
+    return;
+  }
+  el.innerHTML = combos.map((c, i) => renderCombo(c, i+1)).join('');
+}
+
+function renderCombo(c, num) {
+  const riskClass = c.risque === 'low' ? 'r-low' : c.risque === 'med' ? 'r-med' : 'r-high';
+  const riskLabel = c.risque === 'low' ? '✅ Risque Faible' : c.risque === 'med' ? '⚡ Risque Modéré' : '🔥 Risque Élevé';
+  const picks = c.picks.map(p => renderPick(p)).join('');
+  return `
+  <div class="sec-title">${c.icon} <span style="font-size:.65rem;padding:2px 8px;border-radius:4px;background:rgba(245,200,66,.1);color:var(--gold);font-weight:700;text-transform:uppercase;">${c.label}</span> ${c.titre} <div class="sec-line"></div></div>
+  <div class="combo">
+    <div class="combo-head">
+      <div class="combo-left">
+        <div class="combo-num">${String(num).padStart(2,'0')}</div>
+        <div class="combo-info"><h3>${c.nom}</h3><p>${c.desc}</p></div>
+      </div>
+      <div><div class="big-cote">~${c.cote.toFixed(2)}</div><div class="cote-lbl">Cote combinée</div></div>
+    </div>
+    <div>${picks}</div>
+    <div class="combo-foot">
+      <div class="risk ${riskClass}">${riskLabel}</div>
+      <div class="profit">Mise 20€ → Gain potentiel <strong>~${(20 * c.cote).toFixed(0)}€</strong></div>
+    </div>
+  </div>`;
+}
+
+function renderPick(p) {
+  const badgeClass = {football:'b-foot',basket:'b-nba',hockey:'b-nhl',tennis:'b-ten',ucl:'b-ucl'}[p.sport] || 'b-foot';
+  const barColor = {football:'#00D68F,#F5C842',basket:'#FF8C42,#F5C842',hockey:'#00C4CC,#F5C842',tennis:'#9B6DFF,#F5C842',ucl:'#4F8EFF,#F5C842'}[p.sport] || '#00D68F,#F5C842';
+  const probaHtml = p.proba ? `<div class="bar-bg"><div class="bar-fill" style="width:0%;background:linear-gradient(90deg,${barColor})" data-w="${p.proba}"></div></div><div class="bar-txt">${p.probaLabel}</div>` : '';
+  return `
+  <div class="pick">
+    <div class="pick-icon">${p.icon}</div>
+    <div class="badge ${badgeClass}">${p.league}</div>
+    <div class="pick-match">
+      <div class="pick-teams">${p.match}</div>
+      <div class="pick-when">${p.date}</div>
+      ${probaHtml ? `<div class="bar-bg" style="margin-top:5px"><div class="bar-fill" style="width:0%;background:linear-gradient(90deg,${barColor})" data-w="${p.proba}"></div></div><div class="bar-txt">${p.probaLabel}</div>` : ''}
+    </div>
+    <div class="pick-r">
+      <div class="chip">${p.pari}</div>
+      <div class="pick-cote">${p.cote.toFixed(2)}</div>
+    </div>
+  </div>`;
+}
+
+function animateBars() {
+  document.querySelectorAll('.bar-fill').forEach(b => {
+    const w = b.getAttribute('data-w');
+    b.style.width = '0%';
+    setTimeout(() => b.style.width = w + '%', 200 + Math.random()*300);
+  });
+}
+
+// ============================================
+// PANELS
+// ============================================
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentPanel = id;
+  if (id === 'sim') {
+    document.getElementById('panel-all').classList.add('active');
+    document.getElementById('sim-box').scrollIntoView({behavior:'smooth'});
+  } else {
+    document.getElementById('panel-' + id).classList.add('active');
+  }
+  setTimeout(animateBars, 80);
+}
+
+// ============================================
+// SIMULATOR
+// ============================================
+function buildSimOptions() {
+  if (!allData) return;
+  const sel = document.getElementById('sel');
+  sel.innerHTML = allData.combos.map(c => `<option value="${c.cote}">${c.nom} ~${c.cote.toFixed(2)}</option>`).join('');
+}
+
+function calc() {
+  const cote = parseFloat(document.getElementById('sel').value) || 1;
+  const mise = parseFloat(document.getElementById('mise').value) || 0;
+  const gain = (mise * cote).toFixed(2);
+  const profit = (mise * cote - mise).toFixed(2);
+  document.getElementById('g-val').textContent = gain + '€';
+  document.getElementById('g-profit').textContent = 'Profit net : +' + profit + '€';
+  document.getElementById('g-cote').textContent = cote.toFixed(2);
+  document.getElementById('g-rtr').textContent = Math.round(100/cote) + '%';
+}
+
+// ============================================
+// AUTO-REFRESH toutes les 5 minutes
+// ============================================
+loadData();
+setInterval(loadData, 5 * 60 * 1000);
+</script>
+</body>
+</html>
